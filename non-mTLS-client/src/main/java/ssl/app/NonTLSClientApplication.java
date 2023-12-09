@@ -20,7 +20,7 @@ public class NonTLSClientApplication  extends SpringBootServletInitializer {
 	
 	public static void main(String[] args) {
 		SpringApplication.run(NonTLSClientApplication.class, args);
-		System.err.println("##########ClientApplication########");
+		System.err.println("##########Non MTLS ClientApplication########");
 		
 	}
 

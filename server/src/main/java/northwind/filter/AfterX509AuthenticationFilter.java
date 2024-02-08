@@ -3,10 +3,10 @@ package northwind.filter;
 import java.io.IOException;
 import java.security.cert.X509Certificate;
 
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 
 import org.springframework.web.filter.GenericFilterBean;
 

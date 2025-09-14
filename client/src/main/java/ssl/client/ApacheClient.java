@@ -1,7 +1,9 @@
 package ssl.client;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.nio.charset.Charset;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyManagementException;
@@ -22,37 +24,40 @@ import java.util.Map;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpResponseInterceptor;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.config.Registry;
-import org.apache.http.config.RegistryBuilder;
-import org.apache.http.conn.ManagedHttpClientConnection;
-import org.apache.http.conn.socket.ConnectionSocketFactory;
-import org.apache.http.conn.socket.PlainConnectionSocketFactory;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.conn.BasicHttpClientConnectionManager;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.protocol.HttpCoreContext;
-import org.apache.http.ssl.SSLContexts;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.io.BasicHttpClientConnectionManager;
+import org.apache.hc.client5.http.io.ManagedHttpClientConnection;
+import org.apache.hc.client5.http.socket.ConnectionSocketFactory;
+import org.apache.hc.client5.http.socket.PlainConnectionSocketFactory;
+import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
+import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
+import org.apache.hc.client5.http.ssl.TrustSelfSignedStrategy;
+import org.apache.hc.core5.http.*;
+import org.apache.hc.core5.http.config.Registry;
+import org.apache.hc.core5.http.config.RegistryBuilder;
+import org.apache.hc.core5.http.io.HttpClientResponseHandler;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
+import org.apache.hc.core5.http.message.BasicNameValuePair;
+import org.apache.hc.core5.http.protocol.HttpContext;
+import org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 
 import ssl.exception.CoreException;
 import ssl.util.CertificateAnalyser;
 import ssl.util.KeyStoreUtil;
-
+import org.apache.hc.core5.http.protocol.HttpCoreContext;
 @Component
 public class ApacheClient {
 
@@ -69,8 +74,8 @@ public class ApacheClient {
 
 	final static Logger logger = Logger.getLogger(ApacheClient.class);
 
-	public HttpResponse request(final String url, final String method, Map<String, String> headers,
-			Map<String, String> queryParams, final String jsonString) throws CoreException {
+	public String request(final String url, final String method, Map<String, String> headers,
+								Map<String, String> queryParams, final String jsonString) throws CoreException {
 
 		try {
 			KeyStore keystore = keyStoreUtil.readStore();
@@ -84,47 +89,54 @@ public class ApacheClient {
 					NoopHostnameVerifier.INSTANCE);
 
 			Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
-					.register("https", sslsf).register("http", new PlainConnectionSocketFactory()).build();
-			BasicHttpClientConnectionManager connectionManager = new BasicHttpClientConnectionManager(
-					socketFactoryRegistry);
-			RequestBuilder requestBuilder = RequestBuilder.create(method);
-			if (headers != null) {
-				headers.forEach((key, value) -> {
-					requestBuilder.addHeader(key, value);
-				});
-			}
-			if (queryParams != null) {
-				queryParams.forEach((key, value) -> {
-					NameValuePair pair = new BasicNameValuePair(key, value);
-					requestBuilder.addParameters(pair);
-				});
-			}
+					.register("https", sslsf)
+					.register("http", new PlainConnectionSocketFactory())
+					.build();
 
-			requestBuilder.setUri(url);
+			var connectionManager = new BasicHttpClientConnectionManager(socketFactoryRegistry);
 
-			if (method.equals(HttpPost.METHOD_NAME) || method.equals(HttpPut.METHOD_NAME)) {
-				StringEntity input = new StringEntity(jsonString);
-				input.setContentType("application/json");
-				requestBuilder.setEntity(input);
-			}
-			  HttpResponseInterceptor certificateInterceptor = (httpResponse, context) -> {
-		            ManagedHttpClientConnection routedConnection = (ManagedHttpClientConnection)context.getAttribute(HttpCoreContext.HTTP_CONNECTION);
-		            SSLSession sslSession = routedConnection.getSSLSession();
-		            if (sslSession != null) {
-		            	X509Certificate[] certificates = (X509Certificate[]) sslSession.getPeerCertificates();
-		                CertificateAnalyser.analyse(certificates);		             
-		            }
-		        };
-			HttpUriRequest request = requestBuilder.build();
-			CloseableHttpClient client = HttpClientBuilder.create()
-											.setConnectionManager(connectionManager)
-											.setSSLSocketFactory(sslsf)
-											.setSSLContext(sslContext)
-											.addInterceptorLast(certificateInterceptor)
-											.build();
-			HttpResponse response = client.execute(request);
+			  HttpResponseInterceptor certificateInterceptor = (HttpResponse httpResponse,EntityDetails entityDetails, HttpContext context) -> {
+					// Try to get SSL session directly from context first
+					SSLSession sslSession = (SSLSession) context.getAttribute(HttpCoreContext.SSL_SESSION);
+					if (sslSession != null) {
+						try {
+							X509Certificate[] certificates = (X509Certificate[]) sslSession.getPeerCertificates();
+							CertificateAnalyser.analyse(certificates);
+						} catch (Exception e) {
+							logger.warn("Failed to analyze certificates from SSL session: " + e.getMessage());
+						}
+					} else {
+						logger.info("No SSL session found in context");
+					}
+				};
 
-			return response;
+				ClassicRequestBuilder requestBuilder = ClassicRequestBuilder.create(method.toString());
+				if(headers != null){
+					headers.forEach((key,value)->{
+						requestBuilder.addHeader(key,value);
+					});
+				}
+				if(queryParams != null) {
+					queryParams.forEach((key, value) -> {
+						NameValuePair pair = new BasicNameValuePair(key, value);
+						requestBuilder.addParameters(pair);
+					});
+				}
+
+				CloseableHttpClient httpClient = HttpClientBuilder.create()
+						.setConnectionManager(connectionManager)
+						.addResponseInterceptorLast(certificateInterceptor)
+						.build();
+				requestBuilder.setUri(url);
+
+
+				if(method.equals(HttpMethod.POST) || method.equals(HttpMethod.PUT)){
+					StringEntity input = new StringEntity(jsonString, ContentType.APPLICATION_JSON);
+					requestBuilder.setEntity(input);
+				}
+
+				ClassicHttpRequest request=requestBuilder.build();
+				return  getResponse(httpClient,request);
 
 		} catch (MalformedURLException e) {
 			logger.error(e.getMessage());
@@ -140,7 +152,16 @@ public class ApacheClient {
 			throw new CoreException(e.getMessage(), 500);
 		}
 	}
-	
+
+	private String getResponse(HttpClient httpClient, ClassicHttpRequest request) throws IOException {
+		HttpClientResponseHandler<String> responseHandler = (ClassicHttpResponse response) -> {
+			InputStream inputStream = response.getEntity().getContent();
+			String responseStr = IOUtils.toString(inputStream, Charset.defaultCharset());
+			return responseStr;
+		};
+		return httpClient.execute(request,responseHandler);
+	}
+
 	public static void analyseKeystore(KeyStore keyStore,List<String> publicKeys,String privateKeyName) {
 		try {
 			System.out.println(String.format("Size of keystore: %s, type of keystore: %s ",keyStore.size(),keyStore.getType()));

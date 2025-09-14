@@ -9,8 +9,8 @@ import java.util.stream.Stream;
 public class CertificateAnalyser {
   
 	public static void analyse(X509Certificate[] certificates) {	
-		Stream<X509Certificate> certificatesStream = Arrays.stream(certificates);
-		certificatesStream.forEach(certificate -> analyse(certificate));
+		 Arrays.stream(certificates)
+				.forEach(certificate -> analyse(certificate));
 	}
 	
 	public static void analyse(X509Certificate certificate) {	

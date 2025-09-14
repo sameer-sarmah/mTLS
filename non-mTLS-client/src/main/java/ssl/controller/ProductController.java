@@ -4,14 +4,14 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
+import java.util.Map;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
+
+import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,71 +33,23 @@ public class ProductController {
 	
 	@Autowired
 	private ApacheClient client;
-	
-	
-    @RequestMapping( value = "/products",method = RequestMethod.GET)
-    public void downloadExcel( HttpServletRequest request,HttpServletResponse response) throws IOException {
 
-    	OutputStream servletOutputStream = null;
-    	try {
-    		servletOutputStream = response.getOutputStream();
-    		HttpResponse responseFromProductService =client.request(productServiceUrl, HttpGet.METHOD_NAME, new HashMap<String,String>(), new HashMap<String,String>(), null);
-    		HttpEntity responseEntity = responseFromProductService.getEntity();		
-    		IOUtils.copy(responseEntity.getContent(), servletOutputStream);	
-    		
+
+	@RequestMapping( value = "/products",method = RequestMethod.GET)
+	public String getProducts( HttpServletRequest request,HttpServletResponse response) {
+
+		try {
+			String responseFromProductService =client.request(productServiceUrl, HttpGet.METHOD_NAME, Map.of(), Map.of(), null);
+			return responseFromProductService;
+
 		}  catch (CoreException e) {
-			expectionMessageToResponse(e,servletOutputStream);
+			e.printStackTrace();
 		} catch (UnsupportedOperationException e) {
-			expectionMessageToResponse(e,servletOutputStream);
-		} catch (IOException e) {
-			expectionMessageToResponse(e,servletOutputStream);
+			e.printStackTrace();
 		}
-    	finally {
-    		if(servletOutputStream != null && !response.isCommitted()) {
-    			try {
-					servletOutputStream.flush();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-    		}
-    	}
 
-    	
-    }
-    
-    @RequestMapping( value = "/connectionTest",method = RequestMethod.GET)
-    public void connectionTest( HttpServletRequest request,HttpServletResponse response) throws IOException {
-
-    	OutputStream servletOutputStream = null;
-    	try {
-    		servletOutputStream = response.getOutputStream();
-    		HttpResponse responseFromProductService =client.request(productServiceHost, HttpGet.METHOD_NAME, new HashMap<String,String>(), new HashMap<String,String>(), null);
-    		ByteArrayInputStream bis = new ByteArrayInputStream(responseFromProductService.getStatusLine().toString().getBytes());
-    		IOUtils.copy(bis, servletOutputStream);	
-		}  catch (CoreException e) {
-			expectionMessageToResponse(e,servletOutputStream);
-		} catch (UnsupportedOperationException e) {
-			expectionMessageToResponse(e,servletOutputStream);
-		} catch (IOException e) {
-			expectionMessageToResponse(e,servletOutputStream);
-		}
-    	finally {
-    		if(servletOutputStream != null && !response.isCommitted()) {
-    			try {
-					servletOutputStream.flush();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-    		}
-    	}
-
-    	
-    }
-    
-    private void expectionMessageToResponse(Exception e,OutputStream servletOutputStream) throws IOException {
-		ByteArrayInputStream bis = new ByteArrayInputStream(e.getMessage().getBytes());
-		IOUtils.copy(bis, servletOutputStream);	
-    }
+		return "{}";
+	}
 	
 
 }

@@ -1,7 +1,6 @@
 package northwind.client;
 
 import northwind.exception.CoreException;
-import northwind.util.HttpMethod;
 import org.apache.commons.io.IOUtils;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
@@ -16,6 +15,7 @@ import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -28,8 +28,8 @@ import java.util.Map;
 public class ApacheHttpClient{
     final static Logger logger = LoggerFactory.getLogger(ApacheHttpClient.class);
 
-    public String request(final String url,final HttpMethod method,Map<String,String> headers ,
-                          Map<String,String> queryParams,final String jsonString) throws CoreException{
+    public String request(String url,HttpMethod method,Map<String,String> headers,
+                          Map<String,String> queryParams,String jsonString) throws CoreException{
 
         try {
             ClassicRequestBuilder requestBuilder = ClassicRequestBuilder.create(method.toString());
@@ -55,7 +55,6 @@ public class ApacheHttpClient{
             }
 
             ClassicHttpRequest request=requestBuilder.build();
-            CloseableHttpClient client = HttpClientBuilder.create().build();
             return  getResponse(httpClient,request);
 
 

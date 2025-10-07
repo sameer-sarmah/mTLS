@@ -1,4 +1,4 @@
-package ssl.config;
+package northwind.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -14,7 +14,7 @@ http://localhost:8080/swagger-ui.html
  * */
 
 @Configuration
-@ComponentScan(basePackages= {"ssl"})
+@ComponentScan(basePackages= {"northwind"})
 public class AppConfig {
 
 	@Bean

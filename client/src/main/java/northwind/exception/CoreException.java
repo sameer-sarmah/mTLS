@@ -1,4 +1,4 @@
-package ssl.exception;
+package northwind.exception;
 
 public class CoreException extends Exception {
     private String message;

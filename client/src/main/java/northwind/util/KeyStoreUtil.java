@@ -1,4 +1,4 @@
-package ssl.util;
+package northwind.util;
 
 import java.io.InputStream;
 import java.security.KeyStore;

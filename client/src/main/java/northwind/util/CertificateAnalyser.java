@@ -1,4 +1,4 @@
-package ssl.util;
+package northwind.util;
 
 import java.security.Principal;
 import java.security.cert.CertificateException;

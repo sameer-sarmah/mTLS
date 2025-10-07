@@ -1,4 +1,4 @@
-package ssl.client;
+package northwind.client;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,22 +24,23 @@ import java.util.Map;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 
-
 import org.apache.commons.io.IOUtils;
 import org.apache.hc.client5.http.classic.HttpClient;
-import org.apache.hc.client5.http.classic.methods.HttpPost;
-import org.apache.hc.client5.http.classic.methods.HttpPut;
-import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.io.BasicHttpClientConnectionManager;
-import org.apache.hc.client5.http.io.ManagedHttpClientConnection;
 import org.apache.hc.client5.http.socket.ConnectionSocketFactory;
 import org.apache.hc.client5.http.socket.PlainConnectionSocketFactory;
 import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
 import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
 import org.apache.hc.client5.http.ssl.TrustSelfSignedStrategy;
-import org.apache.hc.core5.http.*;
+import org.apache.hc.core5.http.ClassicHttpRequest;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.EntityDetails;
+import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.core5.http.HttpResponseInterceptor;
+import org.apache.hc.core5.http.NameValuePair;
 import org.apache.hc.core5.http.config.Registry;
 import org.apache.hc.core5.http.config.RegistryBuilder;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
@@ -47,6 +48,7 @@ import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.apache.hc.core5.http.protocol.HttpContext;
+import org.apache.hc.core5.http.protocol.HttpCoreContext;
 import org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,10 +56,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 
-import ssl.exception.CoreException;
-import ssl.util.CertificateAnalyser;
-import ssl.util.KeyStoreUtil;
-import org.apache.hc.core5.http.protocol.HttpCoreContext;
+import northwind.exception.CoreException;
+import northwind.util.CertificateAnalyser;
+import northwind.util.KeyStoreUtil;
 @Component
 public class ApacheClient {
 
@@ -74,8 +75,8 @@ public class ApacheClient {
 
 	final static Logger logger = Logger.getLogger(ApacheClient.class);
 
-	public String request(final String url, final String method, Map<String, String> headers,
-								Map<String, String> queryParams, final String jsonString) throws CoreException {
+	public String request( String url, HttpMethod method, Map<String, String> headers,
+								Map<String, String> queryParams, String jsonString) throws CoreException {
 
 		try {
 			KeyStore keystore = keyStoreUtil.readStore();

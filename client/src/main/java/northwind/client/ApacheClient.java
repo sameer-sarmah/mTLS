@@ -165,7 +165,7 @@ public class ApacheClient {
 
 	public static void analyseKeystore(KeyStore keyStore,List<String> publicKeys,String privateKeyName) {
 		try {
-			System.out.println(String.format("Size of keystore: %s, type of keystore: %s ",keyStore.size(),keyStore.getType()));
+			logger.info(String.format("Size of keystore: %s, type of keystore: %s ",keyStore.size(),keyStore.getType()));
 			publicKeys.stream().forEach((publicKey) ->{
 				try {
 					Certificate clientCertificate = keyStore.getCertificate(publicKey);
@@ -175,7 +175,7 @@ public class ApacheClient {
 				}	
 			});
 			Key privateKey = keyStore.getKey(privateKeyName, "password".toCharArray());
-			System.out.println(String.format("algorithm : %s,format : %s",privateKey.getAlgorithm(),privateKey.getFormat()));
+			logger.info(String.format("algorithm : %s,format : %s",privateKey.getAlgorithm(),privateKey.getFormat()));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -183,7 +183,7 @@ public class ApacheClient {
 	
 	public static void analyseCertificate(Certificate certificate) {
 		PublicKey serverPublicKey = certificate.getPublicKey();
-		System.out.println(String.format("algorithm : %s,format : %s",serverPublicKey.getAlgorithm(),serverPublicKey.getFormat()));
+		logger.info(String.format("algorithm : %s,format : %s",serverPublicKey.getAlgorithm(),serverPublicKey.getFormat()));
 		try {
 			certificate.verify(serverPublicKey);
 		} catch (InvalidKeyException | CertificateException | NoSuchAlgorithmException | NoSuchProviderException

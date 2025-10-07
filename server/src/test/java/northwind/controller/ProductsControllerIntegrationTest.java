@@ -2,7 +2,6 @@ package northwind.controller;
 
 import northwind.app.ServerApplication;
 import northwind.client.ApacheHttpClient;
-import northwind.config.TestConfig;
 import northwind.exception.CoreException;
 import northwind.model.Product;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,9 +10,13 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureWebMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpMethod;
@@ -34,7 +37,6 @@ import static org.mockito.Mockito.when;
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
 @AutoConfigureWebMvc
-@Import(TestConfig.class)
 public class ProductsControllerIntegrationTest {
 
     @LocalServerPort
@@ -43,13 +45,8 @@ public class ProductsControllerIntegrationTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
-    @Autowired
+    @MockBean
     private ApacheHttpClient mockApacheHttpClient;
-
-    @BeforeEach
-    public void setup() {
-        Mockito.reset(mockApacheHttpClient);
-    }
 
     @Test
     public void testGetProducts_Success() throws CoreException, IOException {

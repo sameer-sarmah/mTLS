@@ -7,6 +7,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -29,11 +30,14 @@ public class ProductsController {
 	@Autowired
 	private ApacheHttpClient httpClient;
 	
+	@Value("${northwind.service.url:https://services.odata.org/Northwind/Northwind.svc}")
+	private String northwindServiceUrl;
+	
 	private final ObjectMapper objectMapper = new ObjectMapper();
     
     @RequestMapping( value = "/products",method = RequestMethod.GET)
 	public List<Product> getProducts(HttpServletRequest request) {
-		String url = "https://services.odata.org/Northwind/Northwind.svc/Products";
+		String url = northwindServiceUrl + "/Products";
 		String jsonResponse = "";
 		Map<String, String> queryParams = new HashMap<String, String>();
 		queryParams.put("$format", "json");

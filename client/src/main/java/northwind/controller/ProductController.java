@@ -29,9 +29,6 @@ public class ProductController {
 	@Value("${product.service.url}")
     private String  productServiceUrl;
 	
-	@Value("${product.service.host}")
-    private String  productServiceHost;
-	
 	@Autowired
 	private ApacheClient client;
 	

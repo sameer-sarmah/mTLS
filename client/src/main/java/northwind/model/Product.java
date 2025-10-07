@@ -1,5 +1,8 @@
 package northwind.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record Product(
     String ProductID,
     String ProductName,

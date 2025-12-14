@@ -16,8 +16,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.resttestclient.TestRestTemplate;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ClassPathResource;
@@ -41,6 +42,7 @@ import northwind.model.Product;
 @TestPropertySource(properties = {
     "product.service.url=https://localhost:8089/products"
 })
+@AutoConfigureTestRestTemplate
 @ActiveProfiles("test")
 public class ProductsControllerIntegrationTestWithWireMock {
 

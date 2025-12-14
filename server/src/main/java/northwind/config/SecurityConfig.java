@@ -3,6 +3,7 @@ package northwind.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -15,29 +16,24 @@ import org.springframework.security.web.authentication.preauth.x509.X509Authenti
 
 import northwind.filter.AfterX509AuthenticationFilter;
 
+import static org.springframework.security.authorization.AuthenticatedAuthorizationManager.authenticated;
+import static org.springframework.security.converter.RsaKeyConverters.x509;
+
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true, jsr250Enabled = true)
+@EnableMethodSecurity(prePostEnabled = true, securedEnabled = true, jsr250Enabled = true)
 public class SecurityConfig {
 	
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-            .authorizeHttpRequests((authz) -> {
-				try {
-					authz
-					    .anyRequest().authenticated().and()
-					    .x509()
-						.subjectPrincipalRegex("CN=(.*?)(?:,|$)")
-					    .userDetailsService(userDetailsService())
-						.and()
-						.csrf().disable();
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-            );
+            http
+                .authorizeHttpRequests((authz) -> authz
+                    .anyRequest().authenticated()
+                )
+                .x509(x509 -> x509
+                    .subjectPrincipalRegex("CN=(.*?)(?:,|$)")
+                    .userDetailsService(userDetailsService())
+                );
             http.addFilterAfter(new AfterX509AuthenticationFilter(), X509AuthenticationFilter.class);
             return http.build();
     }

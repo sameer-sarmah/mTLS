@@ -6,13 +6,13 @@ import northwind.exception.CoreException;
 import northwind.model.Product;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureWebMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.resttestclient.TestRestTemplate;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -22,6 +22,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -36,7 +37,7 @@ import static org.mockito.Mockito.when;
     classes = {ServerApplication.class},
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
-@AutoConfigureWebMvc
+@AutoConfigureTestRestTemplate
 public class ProductsControllerIntegrationTest {
 
     @LocalServerPort
@@ -45,7 +46,7 @@ public class ProductsControllerIntegrationTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
-    @MockBean
+    @MockitoBean
     private ApacheHttpClient mockApacheHttpClient;
 
     @Test

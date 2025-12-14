@@ -43,10 +43,9 @@ public class DefaultHttpClientBuilder implements IHttpClientBuilder {
                     .setConnectionManager(connectionManager)
                     .addResponseInterceptorLast(certificateInterceptor)
                     .build();
+            return httpClient;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
-        return null;
     }
 }

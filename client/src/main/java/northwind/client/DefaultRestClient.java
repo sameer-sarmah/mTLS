@@ -2,11 +2,10 @@ package northwind.client;
 
 import northwind.exception.CoreException;
 import northwind.http.api.IHttpClientBuilder;
-import northwind.util.KeyStoreUtil;
+import northwind.keystore.api.IKeystoreService;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.core5.http.NameValuePair;
-import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.client.BufferingClientHttpRequestFactory;
@@ -23,16 +22,19 @@ public class DefaultRestClient {
     @Value("${server.ssl.key-password}")
     private String keyPwd;
 
+    @Qualifier("PkcsKeystoreService")
     @Autowired
-    private KeyStoreUtil keyStoreUtil;
+    private IKeystoreService keyStoreUtil;
 
     @Autowired
     private IHttpClientBuilder clientBuilder;
 
+    private static final String PKCS = "PKCS12";
+
     public String request(String url, HttpMethod method, Map<String, String> headers,
                           Map<String, String> queryParams, String jsonString) throws CoreException {
         try{
-            KeyStore keystore = keyStoreUtil.readStore();
+            KeyStore keystore = keyStoreUtil.readStore(PKCS);
             CloseableHttpClient httpClient = clientBuilder.buildHttpClient(keystore, keyPwd);
             ClientHttpRequestFactory httpRequestFactory = new BufferingClientHttpRequestFactory(
                     new HttpComponentsClientHttpRequestFactory(httpClient));

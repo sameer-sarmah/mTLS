@@ -2,7 +2,7 @@ package northwind.client;
 
 import northwind.exception.CoreException;
 import northwind.http.api.IHttpClientBuilder;
-import northwind.util.KeyStoreUtil;
+import northwind.keystore.api.IKeystoreService;
 import org.apache.commons.io.IOUtils;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
@@ -16,6 +16,7 @@ import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
@@ -36,11 +37,14 @@ public class ApacheClient {
 	@Value("${server.ssl.key-password}")
 	private String keyPwd;
 
+	@Qualifier("PkcsKeystoreService")
 	@Autowired
-	private KeyStoreUtil keyStoreUtil;
+	private IKeystoreService keyStoreUtil;
 
     @Autowired
     private IHttpClientBuilder clientBuilder;
+
+	private static final String PKCS = "PKCS12";
 
 	final static Logger logger = Logger.getLogger(ApacheClient.class);
 
@@ -48,7 +52,7 @@ public class ApacheClient {
 								Map<String, String> queryParams, String jsonString) throws CoreException {
 
 		try {
-			KeyStore keystore = keyStoreUtil.readStore();
+			KeyStore keystore = keyStoreUtil.readStore(PKCS);
 			List<String> publicKeys = new ArrayList<String>();
 			publicKeys.add("client");
 			publicKeys.add("server");

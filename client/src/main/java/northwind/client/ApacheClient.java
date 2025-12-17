@@ -39,12 +39,18 @@ public class ApacheClient {
 
 	@Qualifier("PkcsKeystoreService")
 	@Autowired
-	private IKeystoreService keyStoreUtil;
+	private IKeystoreService pkcsKeyStoreService;
+
+	@Qualifier("PemKeystoreService")
+	@Autowired
+	private IKeystoreService pemKeyStoreService;
 
     @Autowired
     private IHttpClientBuilder clientBuilder;
 
 	private static final String PKCS = "PKCS12";
+
+	private static final String PEM = "PEM";
 
 	final static Logger logger = Logger.getLogger(ApacheClient.class);
 
@@ -52,7 +58,8 @@ public class ApacheClient {
 								Map<String, String> queryParams, String jsonString) throws CoreException {
 
 		try {
-			KeyStore keystore = keyStoreUtil.readStore(PKCS);
+			//KeyStore keystore = pkcsKeyStoreService.readStore(PKCS);
+			KeyStore keystore = pemKeyStoreService.readStore(PEM);
 			List<String> publicKeys = new ArrayList<String>();
 			publicKeys.add("client");
 			publicKeys.add("server");
@@ -110,14 +117,25 @@ public class ApacheClient {
 			publicKeys.stream().forEach((publicKey) ->{
 				try {
 					Certificate clientCertificate = keyStore.getCertificate(publicKey);
-					analyseCertificate(clientCertificate);
+					if (clientCertificate != null) {
+						logger.info(String.format("Found certificate with alias: %s", publicKey));
+						analyseCertificate(clientCertificate);
+					} else {
+						logger.warn(String.format("No certificate found with alias: %s", publicKey));
+					}
 				} catch (KeyStoreException e) {
+					logger.error(String.format("Error retrieving certificate with alias %s: %s", publicKey, e.getMessage()));
 					e.printStackTrace();
 				}	
 			});
 			Key privateKey = keyStore.getKey(privateKeyName, "password".toCharArray());
-			logger.info(String.format("algorithm : %s,format : %s",privateKey.getAlgorithm(),privateKey.getFormat()));
+			if (privateKey != null) {
+				logger.info(String.format("Private key - algorithm: %s, format: %s", privateKey.getAlgorithm(), privateKey.getFormat()));
+			} else {
+				logger.warn(String.format("No private key found with alias: %s", privateKeyName));
+			}
 		} catch (Exception e) {
+			logger.error("Error analyzing keystore: " + e.getMessage());
 			e.printStackTrace();
 		}
 	}
